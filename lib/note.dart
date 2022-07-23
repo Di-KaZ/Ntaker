@@ -1,3 +1,5 @@
+import 'package:n_taker/interfaces/inoteprovider.dart';
+
 import 'database.dart';
 
 const String noteTableName = 'notes';
@@ -33,13 +35,15 @@ class Note {
   }
 }
 
-class NoteProvider {
+class SqliteNoteProvider implements INoteProvider {
+  @override
   Future<Note> insert(Note note) async {
     note.id = await (await DataBase.instance.database)
         .insert(noteTableName, note.toMap());
     return note;
   }
 
+  @override
   Future<Note?> getById(int id) async {
     List<Map> notes = await (await DataBase.instance.database)
         .query(noteTableName, where: '$noteId = ?', whereArgs: [id]);
@@ -47,6 +51,7 @@ class NoteProvider {
     return null;
   }
 
+  @override
   Future<List<Note>> getAll() async {
     List<Map> notes =
         await (await DataBase.instance.database).query(noteTableName);
@@ -56,11 +61,13 @@ class NoteProvider {
     return [];
   }
 
+  @override
   Future<int> delete(int id) async {
     return await (await DataBase.instance.database)
         .delete(noteTableName, where: '$noteId = ?', whereArgs: [id]);
   }
 
+  @override
   Future<int> update(Note note) async {
     return await (await DataBase.instance.database).update(
         noteTableName, note.toMap(),

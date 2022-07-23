@@ -61,7 +61,7 @@ class ListNote extends StatelessWidget {
             )),
         direction: DismissDirection.endToStart,
         onDismissed: (direction) => {
-          NoteProvider().delete(notes[index].id!),
+          SqliteNoteProvider().delete(notes[index].id!),
         },
         child: NoteCard(
           note: notes[index],

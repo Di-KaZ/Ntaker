@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:n_taker/route/note_edit.dart';
+import 'package:n_taker/interfaces/inoteprovider.dart';
 import 'package:n_taker/note.dart';
-import 'package:n_taker/widget/new_note_button.dart';
-import 'package:n_taker/widget/note_card.dart';
+import 'package:n_taker/routes/note_edit.dart';
+import 'package:n_taker/widgets/new_note_button.dart';
+import 'package:n_taker/widgets/note_card.dart';
 
 class Home extends StatefulWidget {
   const Home({
@@ -14,7 +15,14 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  var notes = NoteProvider().getAll();
+  INoteProvider noteProvider = SqliteNoteProvider();
+  Future<List<Note>>? notes;
+
+  @override
+  void initState() {
+    notes = noteProvider.getAll();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +33,7 @@ class _HomeState extends State<Home> {
         ),
       ));
       setState(() {
-        notes = NoteProvider().getAll();
+        notes = noteProvider.getAll();
       });
     }
 

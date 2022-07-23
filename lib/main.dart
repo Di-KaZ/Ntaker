@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:n_taker/route/home.dart';
+import 'package:n_taker/routes/home.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
