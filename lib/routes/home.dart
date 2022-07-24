@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:n_taker/interfaces/inoteprovider.dart';
-import 'package:n_taker/note.dart';
+import 'package:n_taker/model/note.dart';
 import 'package:n_taker/routes/note_edit.dart';
 import 'package:n_taker/widgets/new_note_button.dart';
 import 'package:n_taker/widgets/note_card.dart';
@@ -16,30 +17,41 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   INoteProvider noteProvider = SqliteNoteProvider();
-  Future<List<Note>>? notes;
+  final int pageSize = 5;
+
+  final PagingController<int, Note> pagingController =
+      PagingController(firstPageKey: 0);
 
   @override
   void initState() {
-    notes = noteProvider.getAll();
+    pagingController.addPageRequestListener(loadPage);
     super.initState();
+  }
+
+  Future loadPage(int page) async {
+    final notes = await noteProvider.getPage(page, pageSize);
+    final isLastPage = notes.length < pageSize;
+    if (isLastPage) {
+      pagingController.appendLastPage(notes);
+    } else {
+      pagingController.appendPage(notes, page + 1);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    void handleEditNotePage(int? noteId) async {
+    Future<void> handleEditNotePage(int noteId) async {
       await Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => NoteEdit(
           noteId: noteId,
         ),
       ));
-      setState(() {
-        notes = noteProvider.getAll();
-      });
+      pagingController.refresh();
     }
 
     return Scaffold(
       floatingActionButton:
-          NewNoteButton(onPressed: () => handleEditNotePage(null)),
+          NewNoteButton(onPressed: () => handleEditNotePage(-1)),
       appBar: AppBar(
         title: Wrap(
             spacing: 10,
@@ -69,22 +81,11 @@ class _HomeState extends State<Home> {
               ],
             ),
           ),
-          FutureBuilder<List<Note>>(
-            future: notes,
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Center(child: Text('loading'));
-              }
-              return snapshot.data!.isEmpty
-                  ? const Center(child: Text('no data'))
-                  : Center(
-                      child: ListNote(
-                        notes: snapshot.data!,
-                        onNoteTap: handleEditNotePage,
-                      ),
-                    );
-            },
-          )
+          Expanded(
+              child: ListNote(
+            onNoteTap: handleEditNotePage,
+            pagingController: pagingController,
+          ))
         ],
       ),
     );

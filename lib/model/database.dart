@@ -1,13 +1,13 @@
-import 'package:n_taker/note.dart';
+import 'package:n_taker/model/note.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'note.dart';
 
-class DataBase {
+class SqliteProvider {
   static const String databaseName = 'n_taker.db';
 
-  DataBase._constructor();
-  static final DataBase instance = DataBase._constructor();
+  SqliteProvider._constructor();
+  static final SqliteProvider instance = SqliteProvider._constructor();
 
   static Database? _database;
 
@@ -26,6 +26,7 @@ class DataBase {
       $noteId INTEGER PRIMARY KEY,
       $noteName TEXT,
       $noteData BLOB,
+      $notePreview TEXT,
       $noteCreation TEXT,
       $noteModified TEXT
     )

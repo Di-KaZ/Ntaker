@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' hide Text;
-import 'package:n_taker/note.dart';
+import 'package:n_taker/model/note.dart';
 
 class NoteEdit extends StatefulWidget {
-  final int? noteId;
+  final int noteId;
 
-  const NoteEdit({Key? key, this.noteId}) : super(key: key);
+  const NoteEdit({Key? key, required this.noteId}) : super(key: key);
 
   @override
   State<NoteEdit> createState() => _NoteEditState();
@@ -25,25 +25,27 @@ class _NoteEditState extends State<NoteEdit> {
   }
 
   void loadNote() async {
-    var fetchedNote = widget.noteId != null
-        ? (await SqliteNoteProvider().getById(widget.noteId!))
-        : Note();
+    var fetchedNote =
+        (await SqliteNoteProvider().getById(widget.noteId)) ?? Note();
     setState(() {
-      editingNote = fetchedNote;
-      nameController.text = editingNote!.name ?? 'untiled note';
-      dataController = editingNote!.data != null
+      nameController.text = fetchedNote.name;
+      dataController = fetchedNote.data != null
           ? QuillController(
-              document: Document.fromJson(jsonDecode(editingNote!.data!)),
+              document: Document.fromJson(jsonDecode(fetchedNote.data!)),
               selection: const TextSelection.collapsed(offset: 0),
             )
           : QuillController.basic();
+      editingNote = fetchedNote;
     });
   }
 
   void saveNote() async {
     editingNote!.name = nameController.text;
     editingNote!.data = jsonEncode(dataController!.document.toDelta().toJson());
-    if (editingNote != null && editingNote!.id == null) {
+    var dataToText = dataController!.document.toPlainText();
+    editingNote!.preview = dataToText.substring(
+        0, dataToText.length < 50 ? dataToText.length : 50);
+    if (editingNote!.id == null) {
       editingNote = await SqliteNoteProvider().insert(editingNote!);
     } else {
       SqliteNoteProvider().update(editingNote!);
@@ -66,43 +68,36 @@ class _NoteEditState extends State<NoteEdit> {
           ],
           title: const Center(child: Text('Edit Note'))),
       body: dataController != null
-          ? Stack(
-              fit: StackFit.expand,
-              children: [
-                Center(
-                    child: Container(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          children: [
-                            TextField(
-                              decoration: const InputDecoration(
-                                  border: InputBorder.none),
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 18),
-                              controller: nameController,
-                            ),
-                            const Divider(
-                              color: Colors.black12,
-                              height: 1,
-                              indent: 20,
-                              endIndent: 20,
-                            ),
-                            Expanded(
-                              child: QuillEditor.basic(
-                                controller: dataController!,
-                                readOnly: false,
-                              ),
-                            ),
-                          ],
-                        ))),
-                Positioned(
-                  bottom: 20,
-                  left: 20,
-                  right: 20,
-                  child: NTakerEditTooBar(dataController: dataController!),
-                )
-              ],
-            )
+          ? Center(
+              child: Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      TextField(
+                        decoration:
+                            const InputDecoration(border: InputBorder.none),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 18),
+                        controller: nameController,
+                      ),
+                      const Divider(
+                        color: Colors.black12,
+                        height: 1,
+                        indent: 20,
+                        endIndent: 20,
+                      ),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
+                          child: QuillEditor.basic(
+                            controller: dataController!,
+                            readOnly: false,
+                          ),
+                        ),
+                      ),
+                      NTakerEditTooBar(dataController: dataController!)
+                    ],
+                  )))
           : const Text('loading'),
     );
   }
