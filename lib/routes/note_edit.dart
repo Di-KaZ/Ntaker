@@ -1,11 +1,14 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' hide Text;
+import 'package:fluttericon/iconic_icons.dart';
 import 'package:fluttericon/linearicons_free_icons.dart';
 import 'package:n_taker/interfaces/icategoryprovider.dart';
 import 'package:n_taker/interfaces/inoteprovider.dart';
 import 'package:n_taker/model/category.dart';
 import 'package:n_taker/model/note.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NoteEdit extends StatefulWidget {
   final Note note;
@@ -21,6 +24,7 @@ class _NoteEditState extends State<NoteEdit> {
   final ICategoryProvider categoryProvider = SqliteCategoryProvider();
 
   final nameController = TextEditingController();
+  SharedPreferences? prefs;
 
   Note? editingNote;
 
@@ -28,11 +32,39 @@ class _NoteEditState extends State<NoteEdit> {
 
   List<Category> categories = [];
 
+  Timer? autoSave;
+
+  bool autoSaveDone = false;
+
   @override
   void initState() {
-    loadNote();
     loadCategories();
+    loadharedPrefs();
+    loadNote();
+    nameController.addListener(manageAutoSaveTimer);
     super.initState();
+  }
+
+  void loadharedPrefs() async {
+    var sprefs = await SharedPreferences.getInstance();
+    setState(() {
+      prefs = sprefs;
+    });
+  }
+
+  void manageAutoSaveTimer() {
+    var autosave = prefs?.getBool('autoSave');
+    setState(() {
+      autoSaveDone = false;
+    });
+    if (autosave == true) {
+      if (autoSave != null) {
+        autoSave!.cancel();
+      }
+      autoSave = Timer(const Duration(milliseconds: 1000), () {
+        saveNote();
+      });
+    }
   }
 
   void loadCategories() async {
@@ -53,6 +85,7 @@ class _NoteEditState extends State<NoteEdit> {
               selection: const TextSelection.collapsed(offset: 0),
             )
           : QuillController.basic();
+      dataController!.addListener(manageAutoSaveTimer);
       editingNote = fetchedNote;
     });
   }
@@ -61,6 +94,7 @@ class _NoteEditState extends State<NoteEdit> {
     setState(() {
       editingNote!.category = category;
     });
+    manageAutoSaveTimer();
   }
 
   void saveNote() async {
@@ -74,6 +108,9 @@ class _NoteEditState extends State<NoteEdit> {
     } else {
       SqliteNoteProvider().update(editingNote!);
     }
+    setState(() {
+      autoSaveDone = true;
+    });
   }
 
   @override
@@ -90,8 +127,14 @@ class _NoteEditState extends State<NoteEdit> {
           elevation: 0,
           actions: [
             IconButton(
-              onPressed: saveNote,
-              icon: const Icon(LineariconsFree.checkmark_cicle),
+              onPressed: autoSaveDone ||
+                      (prefs?.getBool('autoSave') != null &&
+                          prefs?.getBool('autoSave') == false)
+                  ? saveNote
+                  : null,
+              icon: Icon(prefs?.getBool('autoSave') == true && !autoSaveDone
+                  ? Icons.sync
+                  : LineariconsFree.checkmark_cicle),
             )
           ],
           title: const Center(child: Text('Edit Note'))),

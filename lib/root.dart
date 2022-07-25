@@ -6,6 +6,7 @@ import 'package:n_taker/model/note.dart';
 import 'package:n_taker/routes/category.dart';
 import 'package:n_taker/routes/home.dart';
 import 'package:n_taker/routes/note_edit.dart';
+import 'package:n_taker/routes/settings.dart';
 import 'package:n_taker/widgets/new_note_button.dart';
 
 class Root extends StatefulWidget {
@@ -72,7 +73,7 @@ class _RootState extends State<Root> {
     return Scaffold(
         floatingActionButton:
             NewNoteButton(onPressed: () => handleEditNotePage(null)),
-        appBar: screenIndex == 0
+        appBar: screenIndex != 1
             ? AppBar(
                 title: Wrap(spacing: 10, children: const [
                   Icon(Icons.mode_edit),
@@ -147,8 +148,8 @@ class _RootState extends State<Root> {
             options: options,
             selectedOption: selectedOption,
           ),
-          CategoryPage(),
-          CategoryPage(),
+          const CategoryPage(),
+          const Settings(),
         ][screenIndex]);
   }
 }
