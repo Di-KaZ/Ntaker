@@ -20,8 +20,8 @@ class _ListNoteState extends State<ListCategory> {
   @override
   Widget build(BuildContext context) {
     return PagedGridView(
-      gridDelegate:
-          const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2, mainAxisSpacing: 0),
       pagingController: widget.pagingController,
       shrinkWrap: true,
       padding: const EdgeInsets.all(10),

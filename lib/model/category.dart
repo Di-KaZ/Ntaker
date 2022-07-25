@@ -17,6 +17,14 @@ class Category {
 
   Category();
 
+  @override
+  bool operator ==(dynamic other) {
+    return other != null && other is Category && id == other.id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
+
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       categoryId: id,

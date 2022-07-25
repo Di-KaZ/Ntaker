@@ -72,18 +72,31 @@ class _RootState extends State<Root> {
     return Scaffold(
         floatingActionButton:
             NewNoteButton(onPressed: () => handleEditNotePage(null)),
-        appBar: AppBar(
-          title: Wrap(spacing: 10, children: const [
-            Icon(Icons.mode_edit),
-            Text(
-              'N Taker',
-              style: TextStyle(fontWeight: FontWeight.w900),
-            )
-          ]),
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          elevation: 0,
-        ),
+        appBar: screenIndex == 0
+            ? AppBar(
+                title: Wrap(spacing: 10, children: const [
+                  Icon(Icons.mode_edit),
+                  Text(
+                    'N Taker',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  )
+                ]),
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                elevation: 0,
+              )
+            : AppBar(
+                leading: Container(),
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                elevation: 0,
+                actions: [
+                  IconButton(
+                    onPressed: () {},
+                    icon: const Icon(LineariconsFree.plus_circle_1),
+                  )
+                ],
+                title: const Center(child: Text('Categories'))),
         bottomNavigationBar: BottomAppBar(
           elevation: 0,
           child: Container(

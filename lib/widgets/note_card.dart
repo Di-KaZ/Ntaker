@@ -3,6 +3,7 @@ import 'package:fluttericon/elusive_icons.dart';
 import 'package:fluttericon/linearicons_free_icons.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:intl/intl.dart';
+import 'package:n_taker/helper/stringhextocolor.dart';
 import 'package:n_taker/interfaces/inoteprovider.dart';
 import 'package:n_taker/model/note.dart';
 
@@ -37,7 +38,14 @@ class _NoteCardState extends State<NoteCard> {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.black, width: 2)),
+            color: widget.note.category != null
+                ? HexColor.fromHex(widget.note.category!.color).withAlpha(30)
+                : Colors.transparent,
+            border: Border.all(
+                color: widget.note.category != null
+                    ? Colors.transparent
+                    : Colors.black,
+                width: 2)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Container(
             padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
@@ -65,7 +73,9 @@ class _NoteCardState extends State<NoteCard> {
               ],
             ),
           ),
-          Text(widget.note.preview),
+          Container(
+              margin: const EdgeInsets.fromLTRB(0, 0, 0, 20),
+              child: Text(widget.note.preview)),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -92,6 +102,17 @@ class ListNote extends StatefulWidget {
 
 class _ListNoteState extends State<ListNote> {
   final INoteProvider noteProvider = SqliteNoteProvider();
+  void onDissmissDelete(Note note) async {
+    await noteProvider.delete(note.id!);
+    /**
+     * we need to update display of the list to refresh separator count
+     * In order to avoid refreshing the whole component by calling the noteProvider
+     * We update only the list currently displaying
+     */
+    List<Note> newItemList = List.of(widget.pagingController.itemList ?? []);
+    newItemList.removeWhere((element) => element.id == note.id!);
+    widget.pagingController.itemList = newItemList;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,18 +137,7 @@ class _ListNoteState extends State<ListNote> {
                       )),
                 )),
             direction: DismissDirection.endToStart,
-            onDismissed: (direction) async {
-              var removedId = await noteProvider.delete(note.id!);
-              /**
-               * we need to update display of the list to refresh separator count
-               * In order to avoid refreshing the whole component by calling the noteProvider
-               * We update only the list currently displaying
-               */
-              List<Note> newItemList =
-                  List.of(widget.pagingController.itemList ?? []);
-              newItemList.removeWhere((element) => element.id == removedId);
-              widget.pagingController.itemList = newItemList;
-            },
+            onDismissed: (direction) => onDissmissDelete(note),
             child: NoteCard(
               note: note,
               onTap: widget.onNoteTap,

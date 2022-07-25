@@ -46,6 +46,13 @@ class Note {
     modified = map[noteModified];
     preview = map[notePreview];
     favorite = map[noteFavorite] == 1;
+    if (map[noteCategory] != null) {
+      var cat = Category();
+      cat.color = map[categoryColor];
+      cat.name = map['categoryName'];
+      cat.id = map[noteCategory];
+      category = cat;
+    }
   }
 }
 
@@ -61,10 +68,14 @@ class SqliteNoteProvider implements INoteProvider {
   @override
   Future<Note?> getById(int? id) async {
     if (id == null) return null;
-    List<Map> notes = await (await SqliteProvider.instance.database)
-        .query(noteTableName, where: '$noteId = ?', whereArgs: [id]);
-    if (notes.isNotEmpty) return Note.fromMap(notes.first);
-    return null;
+    List<Map> notes =
+        await (await SqliteProvider.instance.database).rawQuery('''
+      SELECT $noteTableName.*, cat.$categoryName as categoryName, cat.$categoryColor  
+      FROM $noteTableName
+      LEFT JOIN $categoryTableName cat on cat.$categoryId = $noteCategory
+      WHERE $noteTableName.$noteId = $id
+      ''');
+    return Note.fromMap(notes.single);
   }
 
   @override
@@ -97,19 +108,22 @@ class SqliteNoteProvider implements INoteProvider {
     List<Object> args = [];
 
     if (favorite != null) {
-      filter += '$noteFavorite = ?';
+      filter += 'WHERE $noteFavorite = $favorite';
       args.add(favorite ? 1 : 0);
     }
 
     // Todo category
 
-    List<Map> notes = await (await SqliteProvider.instance.database).query(
-        noteTableName,
-        limit: size,
-        offset: page * size,
-        orderBy: noteId,
-        where: filter.isEmpty ? null : filter,
-        whereArgs: args);
+    List<Map> notes =
+        await (await SqliteProvider.instance.database).rawQuery('''
+      SELECT $noteTableName.*, cat.$categoryName as categoryName, cat.$categoryColor  
+      FROM $noteTableName
+      LEFT JOIN $categoryTableName cat on cat.$categoryId = $noteCategory
+      $filter 
+      ORDER BY $noteId ASC;
+      LIMIT $size 
+      OFFSET ${page * size}
+      ''');
     if (notes.isNotEmpty) {
       return notes.map((note) => Note.fromMap(note)).toList();
     }

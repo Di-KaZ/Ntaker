@@ -2,25 +2,44 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' hide Text;
 import 'package:fluttericon/linearicons_free_icons.dart';
+import 'package:n_taker/interfaces/icategoryprovider.dart';
+import 'package:n_taker/interfaces/inoteprovider.dart';
+import 'package:n_taker/model/category.dart';
 import 'package:n_taker/model/note.dart';
 
 class NoteEdit extends StatefulWidget {
-  Note note;
+  final Note note;
 
-  NoteEdit({Key? key, required this.note}) : super(key: key);
+  const NoteEdit({Key? key, required this.note}) : super(key: key);
 
   @override
   State<NoteEdit> createState() => _NoteEditState();
 }
 
 class _NoteEditState extends State<NoteEdit> {
+  final INoteProvider noteProvider = SqliteNoteProvider();
+  final ICategoryProvider categoryProvider = SqliteCategoryProvider();
+
   final nameController = TextEditingController();
+
+  Note? editingNote;
+
   QuillController? dataController;
+
+  List<Category> categories = [];
 
   @override
   void initState() {
     loadNote();
+    loadCategories();
     super.initState();
+  }
+
+  void loadCategories() async {
+    var fetchedCategories = await categoryProvider.getAll();
+    setState(() {
+      categories = fetchedCategories;
+    });
   }
 
   void loadNote() async {
@@ -34,20 +53,26 @@ class _NoteEditState extends State<NoteEdit> {
               selection: const TextSelection.collapsed(offset: 0),
             )
           : QuillController.basic();
-      widget.note = fetchedNote;
+      editingNote = fetchedNote;
+    });
+  }
+
+  void changeCategory(Category? category) {
+    setState(() {
+      editingNote!.category = category;
     });
   }
 
   void saveNote() async {
-    widget.note.name = nameController.text;
-    widget.note.data = jsonEncode(dataController!.document.toDelta().toJson());
+    editingNote!.name = nameController.text;
+    editingNote!.data = jsonEncode(dataController!.document.toDelta().toJson());
     var dataToText = dataController!.document.toPlainText();
-    widget.note.preview = dataToText.substring(
+    editingNote!.preview = dataToText.substring(
         0, dataToText.length < 50 ? dataToText.length : 50);
-    if (widget.note.id == null) {
-      widget.note = await SqliteNoteProvider().insert(widget.note);
+    if (editingNote!.id == null) {
+      editingNote = await SqliteNoteProvider().insert(editingNote!);
     } else {
-      SqliteNoteProvider().update(widget.note);
+      SqliteNoteProvider().update(editingNote!);
     }
   }
 
@@ -86,8 +111,36 @@ class _NoteEditState extends State<NoteEdit> {
                       const Divider(
                         color: Colors.black12,
                         height: 1,
-                        indent: 20,
-                        endIndent: 20,
+                        indent: 10,
+                        endIndent: 10,
+                      ),
+                      Container(
+                        margin: const EdgeInsets.fromLTRB(10, 20, 10, 20),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Category'),
+                            DropdownButton<Category>(
+                              isDense: true,
+                              underline: Container(color: Colors.transparent),
+                              value: editingNote!.category,
+                              hint: Text('Choose'),
+                              items: categories
+                                  .map((cat) => DropdownMenuItem(
+                                        value: cat,
+                                        child: Text(cat.name),
+                                      ))
+                                  .toList(),
+                              onChanged: changeCategory,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Divider(
+                        color: Colors.black12,
+                        height: 1,
+                        indent: 10,
+                        endIndent: 10,
                       ),
                       Expanded(
                         child: Container(
