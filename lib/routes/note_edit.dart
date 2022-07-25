@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' hide Text;
+import 'package:fluttericon/linearicons_free_icons.dart';
 import 'package:n_taker/model/note.dart';
 
 class NoteEdit extends StatefulWidget {
-  final int noteId;
+  Note note;
 
-  const NoteEdit({Key? key, required this.noteId}) : super(key: key);
+  NoteEdit({Key? key, required this.note}) : super(key: key);
 
   @override
   State<NoteEdit> createState() => _NoteEditState();
@@ -16,8 +17,6 @@ class _NoteEditState extends State<NoteEdit> {
   final nameController = TextEditingController();
   QuillController? dataController;
 
-  Note? editingNote;
-
   @override
   void initState() {
     loadNote();
@@ -26,7 +25,7 @@ class _NoteEditState extends State<NoteEdit> {
 
   void loadNote() async {
     var fetchedNote =
-        (await SqliteNoteProvider().getById(widget.noteId)) ?? Note();
+        (await SqliteNoteProvider().getById(widget.note.id)) ?? Note();
     setState(() {
       nameController.text = fetchedNote.name;
       dataController = fetchedNote.data != null
@@ -35,20 +34,20 @@ class _NoteEditState extends State<NoteEdit> {
               selection: const TextSelection.collapsed(offset: 0),
             )
           : QuillController.basic();
-      editingNote = fetchedNote;
+      widget.note = fetchedNote;
     });
   }
 
   void saveNote() async {
-    editingNote!.name = nameController.text;
-    editingNote!.data = jsonEncode(dataController!.document.toDelta().toJson());
+    widget.note.name = nameController.text;
+    widget.note.data = jsonEncode(dataController!.document.toDelta().toJson());
     var dataToText = dataController!.document.toPlainText();
-    editingNote!.preview = dataToText.substring(
+    widget.note.preview = dataToText.substring(
         0, dataToText.length < 50 ? dataToText.length : 50);
-    if (editingNote!.id == null) {
-      editingNote = await SqliteNoteProvider().insert(editingNote!);
+    if (widget.note.id == null) {
+      widget.note = await SqliteNoteProvider().insert(widget.note);
     } else {
-      SqliteNoteProvider().update(editingNote!);
+      SqliteNoteProvider().update(widget.note);
     }
   }
 
@@ -57,13 +56,17 @@ class _NoteEditState extends State<NoteEdit> {
     return Scaffold(
       extendBody: true,
       appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(LineariconsFree.cross_circle),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
           elevation: 0,
           actions: [
             IconButton(
-              onPressed: editingNote != null ? saveNote : null,
-              icon: const Icon(Icons.save),
+              onPressed: saveNote,
+              icon: const Icon(LineariconsFree.checkmark_cicle),
             )
           ],
           title: const Center(child: Text('Edit Note'))),
@@ -137,14 +140,14 @@ class NTakerEditTooBar extends StatelessWidget {
             iconSize: iconSize,
             iconTheme: iconTheme,
             attribute: Attribute.italic,
-            icon: Icons.format_italic,
+            icon: Icons.format_italic_outlined,
             controller: dataController!,
           ),
           ToggleStyleButton(
             iconSize: iconSize,
             iconTheme: iconTheme,
             attribute: Attribute.underline,
-            icon: Icons.format_underline,
+            icon: Icons.format_underline_outlined,
             controller: dataController!,
           ),
         ],

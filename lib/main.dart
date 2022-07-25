@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:n_taker/routes/home.dart';
+import 'package:n_taker/root.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,6 +18,6 @@ class NTaker extends StatelessWidget {
         theme: ThemeData(
           scaffoldBackgroundColor: Colors.white,
         ),
-        home: const Home());
+        home: const Root());
   }
 }

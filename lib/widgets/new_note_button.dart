@@ -10,6 +10,7 @@ class NewNoteButton extends StatelessWidget {
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(50), color: Colors.black),
         child: IconButton(
+            iconSize: 40,
             onPressed: onPressed,
             icon: const Icon(
               Icons.add,

@@ -1,33 +1,76 @@
 import 'package:flutter/material.dart';
+import 'package:fluttericon/elusive_icons.dart';
+import 'package:fluttericon/linearicons_free_icons.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:intl/intl.dart';
 import 'package:n_taker/interfaces/inoteprovider.dart';
 import 'package:n_taker/model/note.dart';
 
-class NoteCard extends StatelessWidget {
+class NoteCard extends StatefulWidget {
   final Note note;
-  final void Function(int noteId) onTap;
-  final DateFormat format = DateFormat('dd/MM/yyyy');
-  NoteCard({Key? key, required this.note, required this.onTap})
+  final void Function(Note note) onTap;
+
+  const NoteCard({Key? key, required this.note, required this.onTap})
       : super(key: key);
+
+  @override
+  State<NoteCard> createState() => _NoteCardState();
+}
+
+class _NoteCardState extends State<NoteCard> {
+  final DateFormat format = DateFormat('dd/MM/yyyy');
+  final INoteProvider noteProvider = SqliteNoteProvider();
+
+  void onFavorite() async {
+    widget.note.favorite = !widget.note.favorite;
+    setState(() {
+      noteProvider.update(widget.note);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => onTap(note.id!),
+      onTap: () => widget.onTap(widget.note),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20), color: Colors.teal),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.black, width: 2)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(note.name,
-              style:
-                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          Text(note.preview),
+          Container(
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(widget.note.name,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.fade,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      )),
+                ),
+                IconButton(
+                    color: widget.note.favorite ? Colors.yellow : Colors.black,
+                    onPressed: onFavorite,
+                    iconSize: 30,
+                    icon: Icon(widget.note.favorite
+                        ? Elusive.star
+                        : LineariconsFree.star_empty))
+              ],
+            ),
+          ),
+          Text(widget.note.preview),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
-            children: [Text(format.format(DateTime.parse(note.creation)))],
+            children: [
+              Text(format.format(DateTime.parse(widget.note.creation)))
+            ],
           )
         ]),
       ),
@@ -36,7 +79,7 @@ class NoteCard extends StatelessWidget {
 }
 
 class ListNote extends StatefulWidget {
-  final Future<void> Function(int noteId) onNoteTap;
+  final Future<void> Function(Note note) onNoteTap;
   final PagingController<int, Note> pagingController;
 
   const ListNote(
