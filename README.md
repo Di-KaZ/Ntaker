@@ -4,8 +4,8 @@ Small note taking app poorly made with Flutter 😎
 
 ## Some screenshots
 
-![NTaker](/screenshots/ntaker.gif)
-![NTaker2](/screenshots/ntaker2.gif)
+![NTaker](https://raw.githubusercontent.com/Di-KaZ/Ntaker/develop/sreenshots/ntaker.gif)
+![NTaker2](https://raw.githubusercontent.com/Di-KaZ/Ntaker/develop/sreenshots/ntaker2.gif)
 
 # Features
 
