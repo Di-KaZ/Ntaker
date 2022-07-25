@@ -38,17 +38,30 @@ class _NoteEditState extends State<NoteEdit> {
 
   @override
   void initState() {
-    loadCategories();
-    loadharedPrefs();
-    loadNote();
-    nameController.addListener(manageAutoSaveTimer);
+    load();
     super.initState();
   }
 
-  void loadharedPrefs() async {
+  void load() async {
+    var fetchedCategories = await categoryProvider.getAll();
+    var fetchedNote =
+        (await SqliteNoteProvider().getById(widget.note.id)) ?? Note();
     var sprefs = await SharedPreferences.getInstance();
     setState(() {
+      categories = fetchedCategories;
       prefs = sprefs;
+      nameController.text = fetchedNote.name;
+      dataController = fetchedNote.data != null
+          ? QuillController(
+              document: Document.fromJson(jsonDecode(fetchedNote.data!)),
+              selection: const TextSelection.collapsed(offset: 0),
+            )
+          : QuillController.basic();
+      editingNote = fetchedNote;
+      if (sprefs.getBool('autoSave') == true) {
+        nameController.addListener(manageAutoSaveTimer);
+        dataController!.addListener(manageAutoSaveTimer);
+      }
     });
   }
 
@@ -67,34 +80,13 @@ class _NoteEditState extends State<NoteEdit> {
     }
   }
 
-  void loadCategories() async {
-    var fetchedCategories = await categoryProvider.getAll();
-    setState(() {
-      categories = fetchedCategories;
-    });
-  }
-
-  void loadNote() async {
-    var fetchedNote =
-        (await SqliteNoteProvider().getById(widget.note.id)) ?? Note();
-    setState(() {
-      nameController.text = fetchedNote.name;
-      dataController = fetchedNote.data != null
-          ? QuillController(
-              document: Document.fromJson(jsonDecode(fetchedNote.data!)),
-              selection: const TextSelection.collapsed(offset: 0),
-            )
-          : QuillController.basic();
-      dataController!.addListener(manageAutoSaveTimer);
-      editingNote = fetchedNote;
-    });
-  }
-
   void changeCategory(Category? category) {
     setState(() {
       editingNote!.category = category;
     });
-    manageAutoSaveTimer();
+    if (prefs!.getBool('autoSave') == true) {
+      manageAutoSaveTimer();
+    }
   }
 
   void saveNote() async {
@@ -165,9 +157,10 @@ class _NoteEditState extends State<NoteEdit> {
                             const Text('Category'),
                             DropdownButton<Category>(
                               isDense: true,
+                              autofocus: false,
                               underline: Container(color: Colors.transparent),
                               value: editingNote!.category,
-                              hint: Text('Choose'),
+                              hint: const Text('Choose'),
                               items: categories
                                   .map((cat) => DropdownMenuItem(
                                         value: cat,
