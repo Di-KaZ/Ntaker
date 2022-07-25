@@ -119,9 +119,7 @@ class _NoteEditState extends State<NoteEdit> {
           elevation: 0,
           actions: [
             IconButton(
-              onPressed: autoSaveDone ||
-                      (prefs?.getBool('autoSave') != null &&
-                          prefs?.getBool('autoSave') == false)
+              onPressed: autoSaveDone || prefs?.getBool('autoSave') == false
                   ? saveNote
                   : null,
               icon: Icon(prefs?.getBool('autoSave') == true && !autoSaveDone
