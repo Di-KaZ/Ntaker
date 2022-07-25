@@ -44,4 +44,4 @@ I hope you like the 'final' product ☺
 
 # Inspiration
 
-This design in found on Dribble by
+This design in found on Dribble by![Mostafa_taghipour.uix](https://dribbble.com/shots/16811788-Notes-app/attachments/11867269?mode=media)
