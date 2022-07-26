@@ -18,7 +18,7 @@ Small note taking app poorly made with Flutter 😎
 
 # Known bugs
 
-- When autosave is enabled, QuillController event lstener breaks the focus of the editor and cursor can't figure out why
+- When autosave is enabled, QuillController event listener breaks the focus of the editor and cursor can't figure out why
 - Favorite 'tab' does not work on release build need to check why
 
 # Download release
