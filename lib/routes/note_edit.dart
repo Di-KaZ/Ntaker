@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' hide Text;
+import 'package:fluttericon/iconic_icons.dart';
 import 'package:fluttericon/linearicons_free_icons.dart';
 import 'package:n_taker/interfaces/icategoryprovider.dart';
 import 'package:n_taker/interfaces/inoteprovider.dart';
@@ -23,9 +24,9 @@ class _NoteEditState extends State<NoteEdit> {
   final ICategoryProvider categoryProvider = SqliteCategoryProvider();
 
   final nameController = TextEditingController();
-  late SharedPreferences prefs;
+  SharedPreferences? prefs;
 
-  late Note editingNote;
+  Note? editingNote;
 
   QuillController? dataController;
 
@@ -65,7 +66,7 @@ class _NoteEditState extends State<NoteEdit> {
   }
 
   void manageAutoSaveTimer() {
-    var autosave = prefs.getBool('autoSave');
+    var autosave = prefs?.getBool('autoSave');
     setState(() {
       autoSaveDone = false;
     });
@@ -81,23 +82,23 @@ class _NoteEditState extends State<NoteEdit> {
 
   void changeCategory(Category? category) {
     setState(() {
-      editingNote.category = category;
+      editingNote!.category = category;
     });
-    if (prefs.getBool('autoSave') == true) {
+    if (prefs!.getBool('autoSave') == true) {
       manageAutoSaveTimer();
     }
   }
 
   void saveNote() async {
-    editingNote.name = nameController.text;
-    editingNote.data = jsonEncode(dataController!.document.toDelta().toJson());
+    editingNote!.name = nameController.text;
+    editingNote!.data = jsonEncode(dataController!.document.toDelta().toJson());
     var dataToText = dataController!.document.toPlainText();
-    editingNote.preview = dataToText.substring(
+    editingNote!.preview = dataToText.substring(
         0, dataToText.length < 50 ? dataToText.length : 50);
-    if (editingNote.id == null) {
-      editingNote = await SqliteNoteProvider().insert(editingNote);
+    if (editingNote!.id == null) {
+      editingNote = await SqliteNoteProvider().insert(editingNote!);
     } else {
-      SqliteNoteProvider().update(editingNote);
+      SqliteNoteProvider().update(editingNote!);
     }
     setState(() {
       autoSaveDone = true;
@@ -118,13 +119,15 @@ class _NoteEditState extends State<NoteEdit> {
           elevation: 0,
           actions: [
             IconButton(
-              onPressed: autoSaveDone || prefs.getBool('autoSave') == false
+              onPressed: autoSaveDone ||
+                      prefs?.getBool('autoSave') == null ||
+                      prefs?.getBool('autoSave') == false
                   ? () {
                       saveNote();
                       Navigator.of(context).pop();
                     }
                   : null,
-              icon: Icon(prefs.getBool('autoSave') == true && !autoSaveDone
+              icon: Icon(prefs?.getBool('autoSave') == true && !autoSaveDone
                   ? Icons.sync
                   : LineariconsFree.checkmark_cicle),
             )
@@ -159,7 +162,7 @@ class _NoteEditState extends State<NoteEdit> {
                               isDense: true,
                               autofocus: false,
                               underline: Container(color: Colors.transparent),
-                              value: editingNote.category,
+                              value: editingNote!.category,
                               hint: const Text('Choose'),
                               items: categories
                                   .map((cat) => DropdownMenuItem(
